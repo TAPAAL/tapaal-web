@@ -1,0 +1,71 @@
+<div class="backdrop">
+  <section #panel role="dialog" aria-modal="true" aria-labelledby="gallery-title">
+    <header>
+      <h2 id="gallery-title">Example nets</h2>
+      <button class="close" aria-label="Close example nets" (click)="cancelled.emit()">
+        <app-icon name="close" />
+      </button>
+    </header>
+    <div class="filters">
+      <label class="search"
+        ><app-icon name="search" /><input
+          #searchInput
+          name="search"
+          type="search"
+          aria-label="Search example nets"
+          placeholder="Search examples…"
+          [(ngModel)]="search"
+      /></label>
+      <select aria-label="Model family" name="family" [(ngModel)]="family">
+        <option value="">All families</option>
+        @for (group of families; track group) {
+          <option>{{ group }}</option>
+        }
+      </select>
+    </div>
+    @if (error()) {
+      <p role="alert">{{ error() }}</p>
+    }
+    @if (loading()) {
+      <p role="status">Opening example…</p>
+    }
+    <div class="results">
+      @for (group of groups; track group.family) {
+        <h3>{{ group.family }}</h3>
+        @for (entry of group.entries; track entry.filename) {
+          <article>
+            <button
+              class="row"
+              [disabled]="!!entry.reason || loading()"
+              (click)="open(entry)"
+              [attr.aria-label]="'Open ' + entry.label"
+              [attr.aria-describedby]="'detail-' + entry.label"
+              [title]="stats(entry)"
+            >
+              <span class="name">{{ title(entry) }}</span>
+              <span class="detail" [id]="'detail-' + entry.label">
+                @if (entry.reason) {
+                  {{ unavailable(entry) }}
+                } @else {
+                  {{ entry.stats.components }}
+                  {{ entry.stats.components === 1 ? 'component' : 'components' }}
+                  @if (capabilities(entry); as features) {
+                    · {{ features }}
+                  }
+                }
+              </span>
+              @if (!entry.reason) {
+                <app-icon class="open" name="chevron" />
+              }
+            </button>
+          </article>
+        }
+      } @empty {
+        <p class="empty" role="status">No examples match your filters.</p>
+        <button class="reset" (click)="family = ''; search = ''; searchInput.focus()">
+          Clear filters
+        </button>
+      }
+    </div>
+  </section>
+</div>

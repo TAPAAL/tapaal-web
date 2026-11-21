@@ -1,0 +1,321 @@
+# Shared differential scenarios: ExecutionReference.java (native 4.0.4) vs check-execution-conformance.mjs (web).
+# case NAME timed|untimed; component NAME active|inactive; place NAME inf|<N|<=N; trans NAME normal|urgent
+# in P T INTERVAL W; out T P W; inh P T W; transport P T Q INTERVAL W; token COMP.PLACE AGE
+# ops: enabled; delay D; fire COMP.T oldest|youngest|manual:P@age;P@age; marking
+# Native bounds are integers (TimeInterval.parse/TimeInvariant.parse); delays and ages may be decimal.
+
+case endpoints timed
+component Main active
+place A inf
+place B inf
+place Q inf
+trans TA normal
+trans TB normal
+in A TA [1,3) 1
+in B TB (1,3] 1
+out TA Q 1
+out TB Q 1
+token Main.A 0
+token Main.B 0
+enabled
+delay 1
+enabled
+delay 1.5
+enabled
+delay 0.5
+enabled
+delay 0.0001
+enabled
+
+case exact-decimal timed
+component Main active
+place P <=1
+place Q inf
+trans T normal
+in P T [1,2) 1
+out T Q 1
+token Main.P 0
+delay 0.1
+delay 0.2
+enabled
+delay 0.7
+enabled
+delay 0.0000000001
+delay 0
+marking
+
+case strict-invariant timed
+component Main active
+place P <1
+place Q inf
+trans T normal
+in P T [0,inf) 1
+out T Q 1
+token Main.P 0
+delay 0.3
+delay 0.7
+delay 0.6999999
+marking
+
+case empty-place-invariant timed
+component Main active
+place P <=0
+place S inf
+trans T normal
+in S T [2,inf) 1
+out T P 1
+token Main.S 0
+delay 5
+enabled
+fire Main.T oldest
+marking
+delay 0
+delay 0.5
+marking
+
+case oldest-youngest-weighted timed
+component Main active
+place P inf
+place Q inf
+trans T1 normal
+trans T2 normal
+in P T1 [2,4) 1
+in P T2 [0,inf) 2
+out T1 Q 1
+out T2 Q 1
+token Main.P 1
+token Main.P 2
+token Main.P 3
+token Main.P 4
+fire Main.T1 oldest
+marking
+fire Main.T1 youngest
+marking
+fire Main.T2 youngest
+marking
+
+case manual-weighted timed
+component Main active
+place P inf
+place Q inf
+trans T normal
+in P T [1,4] 2
+out T Q 1
+token Main.P 0
+token Main.P 1
+token Main.P 3
+token Main.P 4
+token Main.P 5
+fire Main.T manual:P@0;P@1
+marking
+fire Main.T manual:P@5;P@1
+marking
+fire Main.T manual:P@1
+marking
+fire Main.T manual:P@1;P@1
+marking
+fire Main.T manual:P@4;P@1
+marking
+
+case transport-destination-invariant timed
+component Main active
+place P inf
+place Q <=2
+place R inf
+trans TT normal
+trans TO normal
+transport P TT Q [0,inf) 1
+in R TO [0,inf) 1
+out TO Q 1
+token Main.P 3
+token Main.R 3
+enabled
+fire Main.TT oldest
+fire Main.TO oldest
+marking
+delay 2
+enabled
+fire Main.TO oldest
+marking
+
+case transport-weighted-identity timed
+component Main active
+place P inf
+place Q inf
+trans T normal
+transport P T Q [1,inf) 2
+token Main.P 0.5
+token Main.P 1.25
+token Main.P 7
+fire Main.T youngest
+marking
+fire Main.T oldest
+marking
+
+case transport-filter-by-destination timed
+component Main active
+place P inf
+place Q <3
+trans T normal
+transport P T Q [0,inf) 1
+token Main.P 2.5
+token Main.P 3
+token Main.P 9
+fire Main.T oldest
+marking
+enabled
+
+case urgency timed
+component Main active
+place P inf
+place G inf
+place Q inf
+trans U urgent
+trans V urgent
+in P U [0,inf) 1
+inh G V 1
+out U Q 1
+out V G 1
+token Main.P 0
+token Main.G 0
+enabled
+delay 1
+delay 0
+fire Main.U oldest
+enabled
+delay 1
+marking
+
+case urgent-enabled-by-inhibitor timed
+component Main active
+place G inf
+place Q inf
+trans V urgent
+inh G V 1
+out V Q 1
+enabled
+delay 1
+delay 0
+fire Main.V oldest
+marking
+enabled
+delay 1
+
+case source-transition timed
+component Main active
+place Q inf
+trans S normal
+out S Q 2
+enabled
+fire Main.S oldest
+delay 1.5
+fire Main.S oldest
+marking
+
+case urgent-source timed
+component Main active
+place Q inf
+trans S urgent
+out S Q 1
+delay 0.1
+fire Main.S oldest
+delay 0.1
+marking
+
+case selfloops timed
+component Main active
+place P inf
+place R inf
+trans T normal
+trans X normal
+in P T [0,inf) 1
+out T P 1
+transport R X R [0,inf) 1
+token Main.P 2
+token Main.R 2
+fire Main.T oldest
+fire Main.X oldest
+marking
+
+case inhibitor-threshold timed
+component Main active
+place P inf
+place Q inf
+trans T normal
+inh P T 2
+out T Q 1
+token Main.P 0
+token Main.P 5
+enabled
+delay 100
+enabled
+
+case inhibitor-below timed
+component Main active
+place P inf
+place Q inf
+trans T normal
+inh P T 2
+out T Q 1
+token Main.P 7
+enabled
+fire Main.T oldest
+marking
+
+case multiple-inputs timed
+component Main active
+place P1 inf
+place P2 inf
+place S inf
+place Q inf
+trans T normal
+trans U normal
+in P1 T [0,1] 1
+in P2 T [2,3] 1
+in P1 U [0,inf) 1
+in S U [0,inf) 1
+out T Q 1
+out U Q 1
+token Main.P1 0
+token Main.P2 2
+token Main.S 0
+enabled
+delay 1
+enabled
+fire Main.U oldest
+enabled
+marking
+
+case network-active-only untimed
+component A active
+place P inf
+place Q inf
+trans T normal
+in P T [0,inf) 1
+out T Q 1
+token A.P 0
+component B inactive
+place P inf
+place Q inf
+trans T normal
+in P T [0,inf) 1
+out T Q 1
+token B.P 0
+component C active
+place P inf
+place Q inf
+trans T normal
+in P T [0,inf) 2
+out T Q 1
+inh Q T 1
+token C.P 0
+token C.P 0
+enabled
+fire B.T oldest
+fire A.T oldest
+marking
+enabled
+fire C.T oldest
+fire C.T oldest
+marking
+enabled

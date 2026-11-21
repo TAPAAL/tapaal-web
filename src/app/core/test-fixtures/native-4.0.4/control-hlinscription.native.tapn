@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<pnml xmlns="http://www.informatik.hu-berlin.de/top/pnml/ptNetb">
+  <declaration>
+    <structure>
+      <declarations>
+        <namedsort id="dot" name="dot">
+          <dot/>
+        </namedsort>
+      </declarations>
+    </structure>
+  </declaration>
+  <net active="true" id="Main" type="P/T net">
+    <place displayName="true" id="P" initialMarking="2" invariant="&lt; inf" name="P" nameOffsetX="0" nameOffsetY="35" positionX="135" positionY="135">
+      <type>
+        <text>dot</text>
+        <structure>
+          <usersort declaration="dot"/>
+        </structure>
+      </type>
+      <hlinitialMarking>
+        <text>2'dot</text>
+        <structure>
+          <add>
+            <subterm>
+              <numberof>
+                <subterm>
+                  <numberconstant value="2">
+                    <positive/>
+                  </numberconstant>
+                </subterm>
+                <subterm>
+                  <dotconstant/>
+                </subterm>
+              </numberof>
+            </subterm>
+          </add>
+        </structure>
+      </hlinitialMarking>
+    </place>
+    <place displayName="true" id="Q" initialMarking="0" invariant="&lt;= 1" name="Q" nameOffsetX="0" nameOffsetY="35" positionX="540" positionY="135">
+      <type>
+        <text>dot</text>
+        <structure>
+          <usersort declaration="dot"/>
+        </structure>
+      </type>
+    </place>
+    <place displayName="true" id="R" initialMarking="3" invariant="&lt; inf" name="R" nameOffsetX="0" nameOffsetY="35" positionX="135" positionY="345">
+      <type>
+        <text>dot</text>
+        <structure>
+          <usersort declaration="dot"/>
+        </structure>
+      </type>
+      <hlinitialMarking>
+        <text>3'dot</text>
+        <structure>
+          <add>
+            <subterm>
+              <numberof>
+                <subterm>
+                  <numberconstant value="3">
+                    <positive/>
+                  </numberconstant>
+                </subterm>
+                <subterm>
+                  <dotconstant/>
+                </subterm>
+              </numberof>
+            </subterm>
+          </add>
+        </structure>
+      </hlinitialMarking>
+    </place>
+    <place displayName="true" id="S" initialMarking="0" invariant="&lt;= 2" name="S" nameOffsetX="0" nameOffsetY="35" positionX="540" positionY="345">
+      <type>
+        <text>dot</text>
+        <structure>
+          <usersort declaration="dot"/>
+        </structure>
+      </type>
+    </place>
+    <transition angle="0" displayName="true" distribution="constant" firingMode="Random" id="T" infiniteServer="false" name="T" nameOffsetX="0" nameOffsetY="35" player="0" positionX="330" positionY="135" priority="0" urgent="false" value="1.0" weight="1.0"/>
+    <transition angle="0" displayName="true" distribution="constant" firingMode="Random" id="W" infiniteServer="false" name="W" nameOffsetX="0" nameOffsetY="35" player="0" positionX="330" positionY="345" priority="0" urgent="false" value="1.0" weight="1.0"/>
+    <arc id="i" inscription="[0,inf):1" nameOffsetX="0" nameOffsetY="0" source="P" target="T" transportID="1" type="transport" weight="1">
+      <hlinscription>
+        <text>1'dot</text>
+        <structure>
+          <numberof>
+            <subterm>
+              <numberconstant value="1">
+                <positive/>
+              </numberconstant>
+            </subterm>
+            <subterm>
+              <dotconstant/>
+            </subterm>
+          </numberof>
+        </structure>
+      </hlinscription>
+      <arcpath arcPointType="false" id="0" xCoord="150" yCoord="150"/>
+      <arcpath arcPointType="false" id="1" xCoord="255" yCoord="105"/>
+      <arcpath arcPointType="false" id="2" xCoord="345" yCoord="150"/>
+    </arc>
+    <arc id="o" inscription="[0,inf):1" nameOffsetX="0" nameOffsetY="0" source="T" target="Q" transportID="1" type="transport" weight="1">
+      <hlinscription>
+        <text>1'dot</text>
+        <structure>
+          <numberof>
+            <subterm>
+              <numberconstant value="1">
+                <positive/>
+              </numberconstant>
+            </subterm>
+            <subterm>
+              <dotconstant/>
+            </subterm>
+          </numberof>
+        </structure>
+      </hlinscription>
+      <arcpath arcPointType="false" id="0" xCoord="350" yCoord="150"/>
+      <arcpath arcPointType="true" id="1" xCoord="450" yCoord="195"/>
+      <arcpath arcPointType="false" id="2" xCoord="555" yCoord="150"/>
+    </arc>
+    <arc id="ri" inscription="[0,inf):1" nameOffsetX="0" nameOffsetY="0" source="R" target="W" transportID="2" type="transport" weight="2">
+      <hlinscription>
+        <text>1'dot</text>
+        <structure>
+          <numberof>
+            <subterm>
+              <numberconstant value="1">
+                <positive/>
+              </numberconstant>
+            </subterm>
+            <subterm>
+              <dotconstant/>
+            </subterm>
+          </numberof>
+        </structure>
+      </hlinscription>
+      <arcpath arcPointType="false" id="0" xCoord="150" yCoord="360"/>
+      <arcpath arcPointType="false" id="1" xCoord="345" yCoord="360"/>
+    </arc>
+    <arc id="so" inscription="[0,inf):1" nameOffsetX="0" nameOffsetY="0" source="W" target="S" transportID="2" type="transport" weight="2">
+      <hlinscription>
+        <text>1'dot</text>
+        <structure>
+          <numberof>
+            <subterm>
+              <numberconstant value="1">
+                <positive/>
+              </numberconstant>
+            </subterm>
+            <subterm>
+              <dotconstant/>
+            </subterm>
+          </numberof>
+        </structure>
+      </hlinscription>
+      <arcpath arcPointType="false" id="0" xCoord="350" yCoord="360"/>
+      <arcpath arcPointType="false" id="1" xCoord="555" yCoord="360"/>
+    </arc>
+  </net>
+  <feature isColored="false" isGame="false" isStochastic="false" isTimed="true"/>
+</pnml>

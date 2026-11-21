@@ -1,0 +1,1406 @@
+<div
+  class="application"
+  [class.explorer-open]="explorerOpen()"
+  [inert]="
+    pending() !== null ||
+    editingElement() !== null ||
+    documentDialog() !== null ||
+    closingDocument() !== null ||
+    galleryOpen()
+  "
+>
+  <header class="app-header">
+    <div class="menubar" aria-label="Application commands">
+      <a class="brand" href="/workspace" aria-label="TAPAAL workspace"
+        ><span class="brand-symbol">τ</span>TAPAAL</a
+      >
+      <input
+        #fileInput
+        class="sr-only"
+        type="file"
+        accept=".tapn,.pnml,.xml,.json"
+        aria-label="Open model file"
+        (change)="openFile($event)"
+      />
+      <details class="folded-menu file-menu">
+        <summary (click)="prepareMenu($event)">File</summary>
+        <div class="menu-popover" aria-label="File actions">
+          <button (click)="closeMenus(); newModel()">New model</button>
+          <button (click)="closeMenus(); fileInput.click()">Open model…</button>
+          <button (click)="showExamples()">Example nets…</button>
+          <span class="menu-divider"></span>
+          <button (click)="closeMenus(); save()">Save TAPAAL file<kbd>Ctrl S</kbd></button>
+          <button (click)="closeMenus(); save('json')">Save as web JSON…</button>
+        </div>
+      </details>
+      <details class="folded-menu">
+        <summary (click)="prepareMenu($event)">Edit</summary>
+        <div class="menu-popover" aria-label="Edit actions">
+          <button (click)="closeMenus(); undo()" [disabled]="!canUndo() || mode() !== 'Edit'">
+            Undo<kbd>Ctrl Z</kbd>
+          </button>
+          <button (click)="closeMenus(); redo()" [disabled]="!canRedo() || mode() !== 'Edit'">
+            Redo<kbd>Ctrl Y</kbd>
+          </button>
+          <span class="menu-divider"></span>
+          <button
+            (click)="closeMenus(); clipboardAction('copy')"
+            [disabled]="!canCopySelection() || mode() !== 'Edit'"
+          >
+            Copy<kbd>Ctrl C</kbd>
+          </button>
+          <button
+            (click)="closeMenus(); clipboardAction('cut')"
+            [disabled]="!canCopySelection() || mode() !== 'Edit'"
+          >
+            Cut<kbd>Ctrl X</kbd>
+          </button>
+          <button
+            (click)="closeMenus(); clipboardAction('paste')"
+            [disabled]="!activeDocument() || mode() !== 'Edit'"
+          >
+            Paste<kbd>Ctrl V</kbd>
+          </button>
+          <span class="menu-divider"></span>
+          <button (click)="closeMenus(); selectAll()">Select all<kbd>Ctrl A</kbd></button>
+          <button
+            (click)="closeMenus(); duplicate()"
+            [disabled]="!canCopySelection() || mode() !== 'Edit'"
+          >
+            Duplicate<kbd>Ctrl D</kbd>
+          </button>
+          <button
+            (click)="closeMenus(); openEditor()"
+            [disabled]="selectionCount() !== 1 || mode() !== 'Edit'"
+          >
+            Properties…<kbd>F2</kbd>
+          </button>
+          <button
+            (click)="closeMenus(); remove()"
+            [disabled]="!selectionCount() || mode() !== 'Edit'"
+          >
+            Delete<kbd>Del</kbd>
+          </button>
+        </div>
+      </details>
+      <details class="folded-menu">
+        <summary (click)="prepareMenu($event)">View</summary>
+        <div class="menu-popover" aria-label="View actions">
+          <button (click)="closeMenus(); toggleFit()">
+            {{ fitted() ? 'Restore zoom (100%)' : 'Fit model' }}<kbd>Ctrl Shift F</kbd>
+          </button>
+          <button (click)="closeMenus(); actualSize()">Actual size (100%)</button>
+          <button (click)="closeMenus(); zoomBy(1)">Zoom in<kbd>Ctrl J</kbd></button>
+          <button (click)="closeMenus(); zoomBy(-1)">Zoom out<kbd>Ctrl K</kbd></button>
+          <span class="menu-divider"></span>
+          <button (click)="closeMenus(); cycleGrid()">
+            Cycle grid ({{ gridSpacing() || 'off' }})<kbd>G</kbd>
+          </button>
+          <button
+            (click)="closeMenus(); alignToGrid()"
+            [disabled]="mode() !== 'Edit' || !gridSpacing()"
+          >
+            Align net to grid<kbd>Shift G</kbd>
+          </button>
+          <button (click)="closeMenus(); explorerOpen.set(!explorerOpen())">
+            {{ explorerOpen() ? 'Hide' : 'Show' }} element list
+          </button>
+        </div>
+      </details>
+      <details class="folded-menu">
+        <summary (click)="prepareMenu($event)">Draw</summary>
+        <div class="menu-popover" aria-label="Drawing tools">
+          @for (item of tools; track item.id) {
+            <button
+              (click)="closeMenus(); setTool(item.id)"
+              [disabled]="mode() !== 'Edit' && item.id !== 'select' && item.id !== 'pan'"
+            >
+              {{ item.label }}<kbd>{{ item.key }}</kbd>
+            </button>
+          }
+        </div>
+      </details>
+      <details class="folded-menu">
+        <summary (click)="prepareMenu($event)">Simulator</summary>
+        <div class="menu-popover" aria-label="Simulator actions">
+          <button (click)="closeMenus(); setMode(mode() === 'Edit' ? 'Simulate' : 'Edit')">
+            {{ mode() === 'Edit' ? 'Start simulation' : 'Return to editing' }}<kbd>M</kbd>
+          </button>
+          <button (click)="closeMenus(); back()" [disabled]="mode() !== 'Simulate' || !canBack()">
+            Previous marking
+          </button>
+          <button
+            (click)="closeMenus(); step()"
+            [disabled]="mode() !== 'Simulate' || (!canForward() && !enabledTransitions().length)"
+          >
+            Next marking
+          </button>
+          <button (click)="closeMenus(); resetSimulation()" [disabled]="mode() !== 'Simulate'">
+            Reset simulation
+          </button>
+        </div>
+      </details>
+      <span class="project-name">{{ net().name }}{{ dirty() ? ' *' : '' }}</span>
+    </div>
+    <div class="command-toolbar" aria-label="Document toolbar">
+      <button class="icon-button" title="New model" aria-label="New model" (click)="newModel()">
+        <app-icon name="new-file" />
+      </button>
+      <button
+        class="icon-button"
+        title="Open model"
+        aria-label="Open model"
+        (click)="fileInput.click()"
+      >
+        <app-icon name="folder" />
+      </button>
+      <button
+        class="icon-button"
+        title="Save TAPAAL file (Ctrl/Cmd S)"
+        aria-label="Save TAPAAL file"
+        (click)="save()"
+      >
+        <app-icon name="save" />
+      </button>
+      <span class="header-divider"></span>
+      <button
+        class="icon-button"
+        title="Undo (Ctrl/Cmd Z)"
+        aria-label="Undo"
+        [disabled]="!canUndo() || mode() !== 'Edit'"
+        (click)="undo()"
+      >
+        <app-icon name="undo" />
+      </button>
+      <button
+        class="icon-button"
+        title="Redo (Ctrl/Cmd Y)"
+        aria-label="Redo"
+        [disabled]="!canRedo() || mode() !== 'Edit'"
+        (click)="redo()"
+      >
+        <app-icon name="redo" />
+      </button>
+      <span class="header-divider"></span>
+      <button
+        class="icon-button"
+        title="Zoom out (Ctrl/Cmd K)"
+        aria-label="Zoom out"
+        [disabled]="zoom() - 10 < minZoom"
+        (click)="zoomBy(-1)"
+      >
+        <app-icon name="minus" />
+      </button>
+      <input
+        class="zoom-slider"
+        type="range"
+        aria-label="Canvas zoom percent"
+        [min]="minZoom"
+        [max]="maxZoom"
+        step="1"
+        [value]="zoom()"
+        [attr.aria-valuetext]="zoom() + '%'"
+        (input)="changeZoom($event)"
+      />
+      <span class="toolbar-zoom">{{ zoom() }}%</span>
+      <button
+        class="icon-button"
+        title="Zoom in (Ctrl/Cmd J)"
+        aria-label="Zoom in"
+        [disabled]="zoom() + 10 > maxZoom"
+        (click)="zoomBy(1)"
+      >
+        <app-icon name="plus" />
+      </button>
+      <button
+        class="icon-button"
+        [title]="fitted() ? 'Restore zoom (100%)' : 'Fit model (Ctrl/Cmd Shift F)'"
+        [attr.aria-label]="fitted() ? 'Restore zoom (100%)' : 'Fit model'"
+        (click)="toggleFit()"
+      >
+        <app-icon name="fit" />
+      </button>
+      <span class="header-divider"></span>
+      <div class="mode-tabs" aria-label="Workspace mode">
+        @for (item of ['Edit', 'Simulate']; track item) {
+          <button
+            [class.active]="mode() === item"
+            [attr.aria-pressed]="mode() === item"
+            (click)="setMode($any(item))"
+          >
+            <app-icon [name]="item === 'Edit' ? 'cursor' : 'play'" />{{ item }}
+          </button>
+        }
+      </div>
+      <span class="toolbar-hint" [hidden]="mode() === 'Simulate'">{{
+        mode() === 'Edit'
+          ? 'Double-click an element to edit · Right-click for actions'
+          : 'Click an enabled transition to fire'
+      }}</span>
+    </div>
+  </header>
+  <main class="workspace">
+    <nav class="tool-rail" aria-label="Workspace tools">
+      <button
+        class="explorer-toggle"
+        [class.active]="explorerOpen()"
+        aria-label="Toggle model explorer"
+        title="Model explorer"
+        [attr.aria-expanded]="explorerOpen()"
+        aria-controls="model-explorer"
+        (click)="explorerOpen.set(!explorerOpen())"
+      >
+        <app-icon name="layers" />
+      </button>
+      <span class="rail-divider"></span>
+      @for (item of tools; track item.id) {
+        <button
+          [class.active]="tool() === item.id"
+          [disabled]="mode() !== 'Edit' && item.id !== 'select' && item.id !== 'pan'"
+          [attr.aria-label]="item.label"
+          [attr.aria-pressed]="tool() === item.id"
+          [title]="item.label + ' (' + item.key + ')'"
+          (click)="setTool(item.id)"
+        >
+          <app-icon [name]="item.icon" /><small>{{ item.key }}</small>
+        </button>
+      }
+      <span class="rail-divider"></span>
+      <button
+        title="Delete selected elements"
+        aria-label="Delete selected elements"
+        [disabled]="!selectionCount() || mode() !== 'Edit'"
+        (click)="remove()"
+      >
+        <app-icon name="trash" />
+      </button>
+    </nav>
+
+    <section class="canvas-panel">
+      <div class="canvas-tabs">
+        @for (doc of documents(); track doc.id) {
+          <div class="document-tab" [class.active]="doc.id === workspace().activeDocumentId">
+            <button
+              (click)="switchDocument(doc.id)"
+              [attr.aria-pressed]="doc.id === workspace().activeDocumentId"
+              [attr.aria-label]="
+                doc.network.name + (isDocumentDirty(doc) ? ' (modified)' : ' (saved)')
+              "
+            >
+              {{ doc.network.name }}.tapn<span
+                class="tab-dot"
+                [class.unsaved]="isDocumentDirty(doc)"
+              ></span>
+            </button>
+            <button (click)="closeDocument(doc.id)" [attr.aria-label]="'Close ' + doc.network.name">
+              ×
+            </button>
+          </div>
+        }
+        <span class="canvas-meta"
+          >{{ places().length }} places · {{ transitions().length }} transitions</span
+        >
+      </div>
+      <p id="canvas-navigation-help" class="visually-hidden">
+        Arc tool: middle-click to chain places/transitions; middle-drag to pan. Ctrl+click also
+        draws. Wheel to scroll; Shift+wheel to scroll horizontally; Ctrl or Command+wheel to zoom
+        (scroll down to zoom in). Middle-button drag to pan. S select, P place, T transition, A arc,
+        I inhibitor. G cycles grid; Shift+G aligns the net. M toggles simulation; left and right
+        arrows navigate its history.
+      </p>
+      <div class="drawing-area" [class.workspace-empty]="!activeDocument()">
+        <!-- Workspace error: floats over the canvas only, so tabs, controls and the canvas
+             never move. The live region stays mounted so each new message is announced. -->
+        <div class="workspace-error-region" role="alert" aria-atomic="true">
+          @if (error() && !closingDocument()) {
+            <div
+              class="workspace-error error-banner"
+              (keydown.escape)="$event.stopPropagation(); error.set(''); canvas.focus()"
+            >
+              <app-icon name="info" aria-hidden="true" /><span class="workspace-error-message">{{
+                error()
+              }}</span
+              ><button
+                type="button"
+                class="icon-button"
+                aria-label="Dismiss error"
+                title="Dismiss"
+                (click)="error.set(''); canvas.focus()"
+              >
+                <app-icon name="close" aria-hidden="true" />
+              </button>
+            </div>
+          }
+        </div>
+        @if (!activeDocument()) {
+          <div class="empty-workspace">
+            <h2>No model open</h2>
+            <button class="button" (click)="newModel()">New model</button
+            ><button class="button" (click)="fileInput.click()">Open model…</button>
+          </div>
+        }
+        <svg
+          #canvas
+          class="net-canvas"
+          [class.panning]="tool() === 'pan' || panning()"
+          [class.dragging-view]="panning()"
+          [class.creating]="tool() === 'place' || tool() === 'transition'"
+          [attr.viewBox]="viewBox()"
+          role="img"
+          [attr.aria-label]="timed() ? 'Editable timed Petri net' : 'Editable untimed Petri net'"
+          aria-describedby="canvas-navigation-help"
+          tabindex="0"
+          (pointerdown)="pointerDown($event)"
+          (pointermove)="pointerMove($event)"
+          (pointerup)="pointerUp($event)"
+          (pointercancel)="pointerUp($event)"
+          (dblclick)="editFromCanvas($event)"
+          (contextmenu)="openContext($event)"
+        >
+          <defs>
+            <pattern
+              id="grid"
+              [attr.width]="gridSpacing() || 1"
+              [attr.height]="gridSpacing() || 1"
+              patternUnits="userSpaceOnUse"
+            >
+              <path
+                [attr.d]="'M ' + gridSpacing() + ' 0 L 0 0 0 ' + gridSpacing()"
+                fill="none"
+                stroke="#e5e7eb"
+                stroke-width=".6"
+              />
+            </pattern>
+            <marker
+              id="arrowhead"
+              viewBox="0 0 10 10"
+              refX="10"
+              refY="5"
+              markerUnits="userSpaceOnUse"
+              markerWidth="7"
+              markerHeight="7"
+              orient="auto-start-reverse"
+            >
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#222" />
+            </marker>
+            <marker
+              id="inhibitor-end"
+              viewBox="0 0 12 12"
+              refX="10.75"
+              refY="6"
+              markerUnits="userSpaceOnUse"
+              markerWidth="10"
+              markerHeight="10"
+              orient="auto"
+            >
+              <circle cx="6" cy="6" r="4" fill="#fbfcfd" stroke="#222" stroke-width="1.5" />
+            </marker>
+          </defs>
+          <rect
+            [attr.x]="visible().x"
+            [attr.y]="visible().y"
+            [attr.width]="visible().width"
+            [attr.height]="visible().height"
+            [attr.fill]="gridSpacing() ? 'url(#grid)' : 'transparent'"
+          />
+          @for (note of net().annotations ?? []; track note.id) {
+            <g
+              [attr.data-note]="note.id"
+              class="annotation"
+              [class.selected]="isSelected(note.id)"
+              tabindex="0"
+              role="button"
+              [attr.aria-label]="'Annotation: ' + note.text"
+              (keydown.enter)="$event.stopPropagation(); openEditor(note.id)"
+            >
+              <rect
+                [attr.x]="annotationBox(note).x"
+                [attr.y]="annotationBox(note).y"
+                [attr.width]="annotationBox(note).width"
+                [attr.height]="annotationBox(note).height"
+                [attr.fill]="
+                  isSelected(note.id) ? '#dfeaf4' : note.filled === false ? 'transparent' : '#fff'
+                "
+                [attr.stroke]="note.border === false ? 'none' : '#222'"
+              />
+              <svg
+                [attr.x]="annotationTextBox(note).x"
+                [attr.y]="annotationTextBox(note).y"
+                [attr.width]="note.width"
+                [attr.height]="note.height"
+                overflow="hidden"
+              >
+                <text class="annotation-text">
+                  @for (line of noteLines(note); track $index) {
+                    <tspan x="0" [attr.y]="$index * 16 + 12">{{ line }}</tspan>
+                  }
+                </text>
+              </svg>
+              @if (isSelected(note.id) && mode() === 'Edit' && tool() === 'select') {
+                @for (point of noteHandles(note); track point.handle) {
+                  <rect
+                    class="note-handle"
+                    [attr.data-resize]="point.handle"
+                    [attr.x]="point.x - 3"
+                    [attr.y]="point.y - 3"
+                    width="6"
+                    height="6"
+                  />
+                }
+              }
+            </g>
+          }
+          @for (arc of net().arcs; track arc.id) {
+            <g [attr.data-arc]="arc.id" class="net-arc" [class.selected]="isSelected(arc.id)">
+              <path class="arc-hit" [attr.d]="arcPath(arc)" />
+              <path
+                class="arc-line"
+                [attr.d]="arcPath(arc)"
+                [attr.marker-end]="
+                  arc.kind === 'inhibitor' ? 'url(#inhibitor-end)' : 'url(#arrowhead)'
+                "
+              />
+              <text
+                [attr.x]="arcLabel(arc).x"
+                [attr.y]="arcLabel(arc).y"
+                text-anchor="middle"
+                class="arc-label"
+              >
+                {{ arcWeightLabel(arc) }}
+                {{ arcTimingLabel(arc) }}
+              </text>
+            </g>
+          }
+          @if (prototypeArcPath(); as path) {
+            <path
+              class="prototype-arc"
+              [attr.d]="path"
+              [attr.marker-end]="tool() === 'inhibitor' ? 'url(#inhibitor-end)' : 'url(#arrowhead)'"
+            />
+          }
+          @for (node of net().nodes; track node.id) {
+            <g
+              [attr.data-node]="node.id"
+              [attr.transform]="'translate(' + node.x + ',' + node.y + ')'"
+              class="net-node"
+              tabindex="0"
+              role="button"
+              [attr.aria-label]="
+                node.kind +
+                ' ' +
+                node.name +
+                (node.kind === 'place'
+                  ? ', ' + tokens(node) + ' tokens'
+                  : ', ' + actorLabel(node.id))
+              "
+              (keydown.enter)="$event.stopPropagation(); activateNode(node)"
+              (keydown.space)="
+                $event.preventDefault(); $event.stopPropagation(); activateNode(node)
+              "
+              [class.selected]="isSelected(node.id)"
+              [class.arc-source]="arcStart() === node.id"
+              [class.enabled]="mode() === 'Simulate' && node.kind === 'transition' && enabled(node)"
+            >
+              <title>
+                {{
+                  mode() === 'Simulate' && node.kind === 'transition'
+                    ? enabled(node)
+                      ? 'Fire ' + node.name
+                      : node.name + ' is disabled'
+                    : node.name
+                }}
+              </title>
+              @if (isSelected(node.id) || arcStart() === node.id) {
+                <rect class="selection-box" x="-21" y="-22" width="42" height="44" rx="0" />
+              }
+              @if (node.kind === 'place') {
+                <circle class="node-shape" r="15" />
+                @if (poolForOccurrence(node.id)) {
+                  <circle class="shared-ring" r="19" />
+                }
+                @let count = tokens(node);
+                @if (timed() && (count === 1 || count === 2)) {
+                  @for (index of count === 1 ? [0] : [0, 1]; track index) {
+                    @let age = canvasAge(node.id, index);
+                    <text
+                      class="token-age"
+                      text-anchor="middle"
+                      [attr.y]="count === 1 ? 4 : index === 0 ? 9 : -2"
+                      [attr.textLength]="age.length > 4 ? 22 : null"
+                      lengthAdjust="spacingAndGlyphs"
+                    >
+                      {{ age }}
+                    </text>
+                  }
+                } @else if (count === 1) {
+                  <circle class="token" r="3" />
+                } @else if (count > 1) {
+                  <text class="token-count" y="5" text-anchor="middle">
+                    {{ timed() ? '#' : '' }}{{ count }}
+                  </text>
+                }
+              } @else {
+                @if (sharedTransitionOccurrence(node.id)) {
+                  <rect
+                    class="shared-ring shared-transition-marker"
+                    x="-9"
+                    y="-19"
+                    width="18"
+                    height="38"
+                    [attr.transform]="'rotate(' + (node.angle ?? 0) + ')'"
+                  />
+                }
+                <rect
+                  [attr.transform]="'rotate(' + (node.angle ?? 0) + ')'"
+                  class="node-shape transition-shape"
+                  [style.fill]="actorLabel(node.id) === 'Environment' ? 'white' : null"
+                  x="-5"
+                  y="-15"
+                  width="10"
+                  height="30"
+                />
+              }
+              @if (timed() && node.kind === 'transition' && transitionUrgent(node.id)) {
+                <text class="timing-label" text-anchor="middle" y="34">urgent</text>
+              }
+              @let invariant = invariantLabel(node);
+              @if (nodeLabelBox(node, undefined, invariant); as label) {
+                @if (node.nameVisible !== false) {
+                  <text
+                    class="node-name"
+                    [attr.text-anchor]="invariant ? 'start' : 'end'"
+                    [attr.x]="label.x - node.x + (invariant ? 0 : label.width)"
+                    [attr.y]="label.y + 10 - node.y"
+                  >
+                    {{
+                      poolForOccurrence(node.id) || sharedTransitionOccurrence(node.id) ? '◇ ' : ''
+                    }}{{ node.name }}
+                  </text>
+                }
+                @if (invariant) {
+                  <text
+                    class="invariant-label"
+                    [attr.x]="label.x - node.x"
+                    [attr.y]="label.y + 23 - node.y"
+                  >
+                    {{ invariant }}
+                  </text>
+                }
+              }
+            </g>
+          }
+          @if (marquee(); as box) {
+            <rect
+              class="marquee"
+              [attr.x]="box.x"
+              [attr.y]="box.y"
+              [attr.width]="box.width"
+              [attr.height]="box.height"
+            />
+          }
+          @if (mode() === 'Edit' && tool() === 'select') {
+            @for (arc of net().arcs; track arc.id) {
+              @if (isSelected(arc.id)) {
+                <g [attr.data-arc]="arc.id" class="bend-handles">
+                  @for (bend of arc.bends ?? []; track $index) {
+                    @if (bend.curved) {
+                      <circle
+                        class="bend-handle"
+                        [attr.data-bend]="$index"
+                        [attr.cx]="bend.x"
+                        [attr.cy]="bend.y"
+                        r="4"
+                      />
+                    } @else {
+                      <rect
+                        class="bend-handle"
+                        [attr.data-bend]="$index"
+                        [attr.x]="bend.x - 4"
+                        [attr.y]="bend.y - 4"
+                        width="8"
+                        height="8"
+                      />
+                    }
+                  }
+                  <circle
+                    class="bend-handle endpoint-handle"
+                    data-endpoint="true"
+                    [attr.cx]="arcGeometries().get(arc.id)!.end.x"
+                    [attr.cy]="arcGeometries().get(arc.id)!.end.y"
+                    r="4"
+                  />
+                </g>
+              }
+            }
+          }
+        </svg>
+      </div>
+    </section>
+    <aside class="inspector">
+      <div class="component-group">
+        <div class="group-caption">Components</div>
+        @for (component of components(); track component.id) {
+          <div class="component-entry">
+            <input
+              type="checkbox"
+              [checked]="component.active"
+              [disabled]="mode() !== 'Edit'"
+              [attr.aria-label]="'Include ' + component.net.template + ' in network'"
+              (change)="toggleComponent(component.id, $event)"
+            />
+            <button
+              class="component-row"
+              [class.active]="component.id === activeDocument()?.session?.componentId"
+              [attr.aria-current]="
+                component.id === activeDocument()?.session?.componentId ? 'true' : null
+              "
+              (click)="switchComponent(component.id)"
+            >
+              {{ component.net.template }}{{ component.active ? '' : ' (inactive)' }}
+            </button>
+          </div>
+        }
+        @if (activeDocument()) {
+          <div class="component-actions">
+            <button (click)="componentDialog('add')" [disabled]="mode() !== 'Edit'">Add…</button>
+            <button (click)="componentDialog('copy')" [disabled]="mode() !== 'Edit'">Copy…</button>
+            <button (click)="componentDialog('rename')" [disabled]="mode() !== 'Edit'">
+              Rename…
+            </button>
+            <button
+              (click)="removeCurrentComponent()"
+              [disabled]="mode() !== 'Edit' || components().length < 2"
+            >
+              Remove
+            </button>
+            <button
+              (click)="moveComponent(-1)"
+              [disabled]="mode() !== 'Edit'"
+              aria-label="Move component up"
+            >
+              ↑
+            </button>
+            <button
+              (click)="moveComponent(1)"
+              [disabled]="mode() !== 'Edit'"
+              aria-label="Move component down"
+            >
+              ↓
+            </button>
+          </div>
+        }
+      </div>
+      @if (mode() === 'Simulate') {
+        @if (
+          timed() ||
+          activeDocument()!.network.type.game ||
+          activeDocument()!.network.shared.places.length ||
+          activeDocument()!.network.shared.transitions.length
+        ) {
+          <section class="simulation-group" aria-label="Time and token selection">
+            @if (timed()) {
+              <h2>Global time: {{ globalTime() }}</h2>
+              <p role="status">Global legal delay: {{ legalDelay() }}</p>
+              <label for="delay-amount">Exact decimal delay</label>
+              <input
+                id="delay-amount"
+                inputmode="decimal"
+                [value]="delayAmount()"
+                (input)="delayAmount.set($any($event.target).value)"
+              />
+              <button class="button" (click)="delay()">Delay</button>
+            }
+            <label for="token-policy">Token choice per input</label>
+            <select
+              id="token-policy"
+              [value]="tokenPolicy()"
+              (change)="setTokenPolicy($any($event.target).value)"
+            >
+              <option value="random">Random eligible (default)</option>
+              <option value="manual">Manual token selection</option>
+              <option value="oldest">Oldest eligible</option>
+              <option value="youngest">Youngest eligible</option>
+            </select>
+          </section>
+        }
+        @if (activeDocument()?.network?.type?.game) {
+          <p class="simulation-hint">
+            Game: manual exploration; strategy synthesis/verification unavailable.
+          </p>
+        }
+        <section class="simulation-group" aria-label="Enabled transitions">
+          <h2>
+            Enabled transitions <span>{{ enabledTransitions().length }}</span>
+          </h2>
+          @if (inactiveView()) {
+            <p class="inactive-note" role="status">
+              This component is inactive. Local places stay frozen at their initial marking and
+              ages; shared places reflect the live global pool. It cannot fire or constrain global
+              delay.
+            </p>
+          }
+          <div class="enabled-list">
+            @for (ref of enabledTransitions(); track transitionKey(ref)) {
+              <button
+                class="enabled-row"
+                [class.selected]="
+                  ref.componentId === activeDocument()?.session?.componentId &&
+                  isSelected(ref.elementId)
+                "
+                (click)="selectEnabled(ref)"
+                (dblclick)="fireEnabled(ref)"
+                (keydown.enter)="$event.preventDefault(); fireEnabled(ref)"
+              >
+                <span class="enabled-indicator"></span>{{ transitionName(ref) }}
+                {{ actorLabel(ref.elementId, ref.componentId) }}
+              </button>
+            }
+            @if (deadlocked()) {
+              <p class="deadlock-note" role="status">
+                {{
+                  timed()
+                    ? 'No transitions enabled now. A legal delay may enable a transition.'
+                    : 'Deadlock at this marking. No transitions are enabled.'
+                }}
+              </p>
+            }
+          </div>
+          <button
+            class="button primary fire-button"
+            (click)="fireSelected()"
+            [disabled]="!enabledTransitions().length"
+          >
+            Fire transition
+          </button>
+          <p class="simulation-hint">
+            Select a transition, then Fire. Double-click a row to fire directly.
+          </p>
+        </section>
+        <section class="simulation-group" aria-label="Simulation control">
+          <h2>Simulation control</h2>
+          <div class="simulation-buttons">
+            <button
+              class="button"
+              (click)="back()"
+              [disabled]="!canBack()"
+              title="Previous marking"
+            >
+              <app-icon name="undo" />Back
+            </button>
+            <button
+              class="button"
+              (click)="step()"
+              [disabled]="!canForward() && !enabledTransitions().length"
+              [title]="
+                activeDocument()?.network?.type?.game
+                  ? 'Replay the next marking, or fire the selected transition'
+                  : 'Replay the next marking, or fire the first enabled transition'
+              "
+            >
+              <app-icon name="step" />{{ canForward() ? 'Forward' : 'Step' }}
+            </button>
+            <button
+              class="button"
+              (click)="resetSimulation()"
+              [disabled]="trace().length <= 1"
+              title="Return to initial marking"
+            >
+              <app-icon name="reset" />Reset
+            </button>
+          </div>
+          <p class="simulation-count">
+            Physical network total: {{ physicalTokens() }} tokens · Network step {{ cursor() }} ·
+            Viewed component: {{ tokenCount() }}
+            {{ tokenCount() === 1 ? 'token' : 'tokens' }}
+          </p>
+        </section>
+        <section class="simulation-group history-group" aria-label="Simulation history">
+          <h2>Simulation history</h2>
+          <div class="history-list">
+            @for (state of trace(); track $index) {
+              <button
+                class="history-row"
+                [class.current]="$index === cursor()"
+                [class.future]="$index > cursor()"
+                [attr.aria-current]="$index === cursor() ? 'step' : null"
+                (click)="jumpToMarking($index)"
+                [title]="historyMarkingText($index, state)"
+              >
+                <span class="history-index">{{ $index }}</span>
+                <span>{{ historyLabel($index, state) }}</span>
+              </button>
+            }
+          </div>
+        </section>
+        @if (
+          timed() ||
+          activeDocument()!.network.type.game ||
+          activeDocument()!.network.shared.places.length ||
+          activeDocument()!.network.shared.transitions.length
+        ) {
+          <section class="simulation-group" aria-label="Token ages">
+            <p>
+              All policies use eligible tokens, including transport destination invariants. Manual
+              selection requires the exact weight for every consuming input. Forward replays saved
+              choices.
+            </p>
+            <h2>Token ages</h2>
+            @for (place of places(); track place.id) {
+              <p>{{ place.name }}: {{ agesText(place.id) }}</p>
+            }
+          </section>
+        }
+      }
+      @if (activeDocument(); as doc) {
+        <app-shared-transitions-pane
+          [source]="activeDocument()!.network"
+          [documentId]="doc.id"
+          [(expanded)]="expandedTransitionPools"
+          [disabled]="mode() !== 'Edit'"
+          (edit)="openSharedTransition($event)"
+          (remove)="deleteSharedTransition($event)"
+          (navigate)="navigateOccurrence($event)"
+        />
+        <app-shared-places-pane
+          [source]="doc.network"
+          [disabled]="mode() !== 'Edit'"
+          [selected]="selectedPool()"
+          (edit)="openSharedPool($event)"
+          (remove)="deleteSharedPool($event)"
+          (navigate)="navigateOccurrence($event)"
+        />
+        <app-constants-pane
+          [network]="doc.network"
+          [disabled]="mode() !== 'Edit'"
+          (edit)="openConstant($event)"
+          (remove)="deleteConstant($event)"
+          (navigate)="navigateConstantUse($event)"
+        />
+      }
+      @if (savedQueryNames().length) {
+        <section class="component-group saved-query-group" aria-label="Saved queries">
+          <div class="group-caption">
+            Queries <span>{{ savedQueryNames().length }}</span>
+          </div>
+          <ul>
+            @for (name of savedQueryNames(); track $index) {
+              <li>{{ name }}</li>
+            }
+          </ul>
+          <p>Preserved in saves. Query editing and verification are not yet available.</p>
+          <details>
+            <summary>Remove saved queries…</summary>
+            <p>
+              This removes all saved queries and permits edits to their protected elements. You can
+              undo this action.
+            </p>
+            <button class="button" [disabled]="mode() !== 'Edit'" (click)="discardSavedQueries()">
+              Remove all queries
+            </button>
+          </details>
+        </section>
+      }
+      @if (explorerOpen()) {
+        <aside class="model-panel" id="model-explorer" aria-label="Model explorer">
+          <div class="panel-heading">
+            <span>Elements</span>
+            <button
+              class="icon-button"
+              aria-label="Close model explorer"
+              title="Close model explorer"
+              (click)="explorerOpen.set(false)"
+            >
+              <app-icon name="close" />
+            </button>
+          </div>
+          <div class="tree-section">
+            ELEMENTS <span>{{ net().nodes.length }}</span>
+          </div>
+          @for (node of net().nodes; track node.id) {
+            <button
+              class="tree-node"
+              [class.selected]="isSelected(node.id)"
+              (click)="selectElement(node.id, $event.shiftKey)"
+            >
+              <app-icon [name]="node.kind === 'place' ? 'circle' : 'transition'" />{{
+                poolForOccurrence(node.id) ? '◇ ' : ''
+              }}{{ node.name }}
+            </button>
+          }
+          <div class="tree-section">
+            CONNECTIONS <span>{{ net().arcs.length }}</span>
+          </div>
+          @for (arc of net().arcs; track arc.id) {
+            <button
+              class="tree-node"
+              [class.selected]="isSelected(arc.id)"
+              (click)="selectElement(arc.id, $event.shiftKey)"
+            >
+              <app-icon [name]="arc.kind === 'inhibitor' ? 'inhibitor' : 'arrow'" />{{
+                nodeName(arc.source)
+              }}
+              → {{ nodeName(arc.target) }}
+            </button>
+          }
+        </aside>
+      }
+
+      @if (timed()) {
+        <section class="simulation-group" aria-label="Timed capabilities">
+          <h2>Timed P/T net</h2>
+          <p>
+            Simulate active components with one global clock. Shared places use one physical token
+            pool. Shared transitions synchronize all active members as one atomic event. Constants
+            resolve from the current source revision.
+          </p>
+          <details>
+            <summary>Timed support and file compatibility</summary>
+            <p>
+              TAPAAL 4.0.4 resets nonzero initial ages to zero when opening TAPN files. A loader
+              supporting initial token ages is required. Native bounds are integers; use JSON to
+              retain decimal bounds.
+            </p>
+          </details>
+          @if (hasInitialAges()) {
+            <p role="note">
+              This model has nonzero initial ages. TAPAAL 4.0.4 loses them when opening a TAPN file.
+              Keep a web JSON copy or use a loader supporting initial token ages.
+            </p>
+          }
+          @if (mode() === 'Edit') {
+            <p>
+              Subnet copy/cut/paste/duplicate preserve constant references and initial timing in
+              TAPAAL Web. Select complete transport pairs. Cross-document paste refuses constant
+              name collisions. Desktop timed or symbolic clipboard transfer is unavailable.
+            </p>
+          }
+        </section>
+      }
+      @if (mode() !== 'Simulate') {
+        @if (selectionCount() > 1) {
+          <div class="selection-summary">
+            <span class="eyebrow">MULTIPLE SELECTION</span>
+            <h2>{{ selectionCount() }} elements selected</h2>
+            <p class="field-hint">
+              {{ selectedNodes().length }} nodes ·
+              {{ selectionCount() - selectedNodes().length - selectedNotes().length }} arcs ·
+              {{ selectedNotes().length }} notes. Drag any selected node to move the group.
+            </p>
+            <div class="selection-actions">
+              <button
+                class="button"
+                [disabled]="mode() !== 'Edit' || !canCopySelection()"
+                (click)="duplicate()"
+              >
+                Duplicate
+              </button>
+              <button class="button" [disabled]="mode() !== 'Edit'" (click)="remove()">
+                Delete
+              </button>
+              <button
+                class="button"
+                [disabled]="mode() !== 'Edit' || selectedNodes().length < 2"
+                (click)="align('y')"
+              >
+                Align horizontally
+              </button>
+              <button
+                class="button"
+                [disabled]="mode() !== 'Edit' || selectedNodes().length < 2"
+                (click)="align('x')"
+              >
+                Align vertically
+              </button>
+            </div>
+            <p class="field-hint">
+              Shift-click to add or remove elements. Ctrl/Cmd D duplicates the selected subnet;
+              Ctrl/Cmd A selects all.
+            </p>
+            <button class="text-button" (click)="selectElement(null)">Clear selection</button>
+          </div>
+        } @else if (selected(); as node) {
+          <div class="selection-title">
+            <div class="element-icon">
+              <app-icon [name]="node.kind === 'place' ? 'circle' : 'transition'" />
+            </div>
+            <div>
+              <h2>{{ node.name }}</h2>
+              <p>{{ node.kind === 'place' ? 'Place' : 'Transition' }} · {{ net().template }}</p>
+            </div>
+            @if (mode() === 'Edit') {
+              <button
+                class="text-button"
+                (click)="openEditor(node.id)"
+                title="Open properties dialog"
+              >
+                Edit…
+              </button>
+            }
+          </div>
+          @if (timed()) {
+            <div class="inspector-section">
+              <p>
+                {{
+                  node.kind === 'place'
+                    ? 'Invariant: ' + placeInvariantText(node.id)
+                    : transitionUrgent(node.id)
+                      ? 'Urgent transition'
+                      : 'Nonurgent transition'
+                }}
+              </p>
+              @if (node.kind === 'place') {
+                <p>Initial ages: {{ agesText(node.id) }}</p>
+              }
+              <p>Use Edit… to change timing and marking together.</p>
+            </div>
+          }
+          <div class="inspector-section">
+            <label for="element-name">Name</label
+            ><input
+              id="element-name"
+              [value]="node.name"
+              [disabled]="mode() !== 'Edit' || !!poolForOccurrence(node.id)"
+              (change)="edit('name', $event)"
+            />
+          </div>
+          @if (node.kind === 'place') {
+            <div class="inspector-section">
+              <label for="tokens">{{ mode() === 'Simulate' ? 'Current tokens' : 'Marking' }}</label
+              ><input
+                id="tokens"
+                type="number"
+                min="0"
+                step="1"
+                [value]="tokens(node)"
+                [disabled]="mode() !== 'Edit' || !!poolForOccurrence(node.id)"
+                (change)="edit('tokens', $event)"
+              />
+            </div>
+          } @else if (mode() === 'Simulate') {
+            <div class="inspector-section">
+              <span class="eyebrow">FIRING</span>
+              <div class="property-row">
+                <span>Status</span><strong>{{ enabled(node) ? 'Enabled' : 'Disabled' }}</strong>
+              </div>
+              <button
+                class="button primary fire-button"
+                [disabled]="mode() !== 'Simulate' || !enabled(node)"
+                (click)="fire(node)"
+              >
+                <app-icon name="play" />Fire transition
+              </button>
+              <p class="field-hint">
+                All input weights must be available. Inhibitors require fewer tokens than their
+                threshold.
+              </p>
+            </div>
+          }
+          <div class="inspector-section">
+            <span class="eyebrow">Position</span>
+            <div class="position-values">
+              <label for="position-x"
+                >X<input
+                  id="position-x"
+                  type="number"
+                  [value]="node.x"
+                  [disabled]="mode() !== 'Edit'"
+                  (change)="edit('x', $event)" /></label
+              ><label for="position-y"
+                >Y<input
+                  id="position-y"
+                  type="number"
+                  [value]="node.y"
+                  [disabled]="mode() !== 'Edit'"
+                  (change)="edit('y', $event)"
+              /></label>
+            </div>
+          </div>
+        } @else if (selectedNote(); as note) {
+          <div class="selection-title">
+            <h2>Annotation</h2>
+            <button
+              class="text-button"
+              [disabled]="mode() !== 'Edit'"
+              (click)="openEditor(note.id)"
+            >
+              Edit text…
+            </button>
+          </div>
+          <div class="inspector-section">
+            <p class="field-hint">{{ note.text }}</p>
+            @if (note.filled === false) {
+              <p class="field-hint">
+                Transparent background is saved in JSON only. Make it solid to save as TAPN.
+              </p>
+              <button
+                class="button"
+                [disabled]="mode() !== 'Edit'"
+                (click)="makeNoteSolid(note.id)"
+              >
+                Make solid
+              </button>
+            }
+            <button class="button" [disabled]="mode() !== 'Edit'" (click)="duplicate()">
+              Duplicate annotation
+            </button>
+          </div>
+        } @else if (selectedArc(); as arc) {
+          <div class="selection-title">
+            <div class="element-icon"><app-icon name="arrow" /></div>
+            <div>
+              <h2>Arc</h2>
+              <p>{{ net().template }} · connection</p>
+            </div>
+            @if (mode() === 'Edit') {
+              <button
+                class="text-button"
+                (click)="openEditor(arc.id)"
+                title="Open properties dialog"
+              >
+                Edit…
+              </button>
+            }
+          </div>
+          <div class="inspector-section">
+            @if (timed()) {
+              <p>{{ arcTimingLabel(arc) }}</p>
+              <p>Use Edit… to edit intervals, paired weights and transport pairing atomically.</p>
+            }
+            <span class="eyebrow">ARC Properties</span><label for="arc-kind">Type</label
+            ><select
+              id="arc-kind"
+              [value]="arc.kind"
+              [disabled]="mode() !== 'Edit' || timed()"
+              (change)="editArc('kind', $event)"
+            >
+              <option value="normal">Normal</option>
+              <option value="inhibitor">Inhibitor</option></select
+            ><label for="arc-weight">{{
+              arc.kind === 'inhibitor' ? 'Inhibitor threshold' : 'Weight'
+            }}</label
+            ><input
+              id="arc-weight"
+              type="text"
+              [value]="weightText(arc)"
+              [disabled]="mode() !== 'Edit' || timed()"
+              (change)="editArc('weight', $event)"
+            />
+            <div class="property-row">
+              <span>Source</span><strong>{{ nodeName(arc.source) }}</strong>
+            </div>
+            <div class="property-row">
+              <span>Target</span><strong>{{ nodeName(arc.target) }}</strong>
+            </div>
+            <p class="field-hint">
+              {{
+                arc.kind === 'inhibitor'
+                  ? 'Enabled only when the source has fewer tokens than this threshold. No tokens are consumed.'
+                  : 'Number of tokens consumed or produced when the transition fires.'
+              }}
+            </p>
+          </div>
+        } @else {
+          <div class="selection-title">
+            <div class="element-icon"><app-icon name="layers" /></div>
+            <div>
+              <h2>{{ net().template }}</h2>
+              <p>Template overview</p>
+            </div>
+          </div>
+          <div class="inspector-section">
+            <label for="model-name">Model name</label
+            ><input
+              id="model-name"
+              [value]="net().name"
+              [disabled]="mode() !== 'Edit'"
+              (change)="editDocument('name', $event)"
+            /><label for="template-name">Template name</label
+            ><input
+              id="template-name"
+              [value]="net().template"
+              [disabled]="mode() !== 'Edit'"
+              (change)="editDocument('template', $event)"
+            />
+            <p class="field-hint">
+              Select an element to inspect it, or use New to start an empty net.
+            </p>
+            <div class="property-row">
+              <span>Places</span><strong>{{ places().length }}</strong>
+            </div>
+            <div class="property-row">
+              <span>Transitions</span><strong>{{ transitions().length }}</strong>
+            </div>
+            <div class="property-row">
+              <span>Arcs</span><strong>{{ net().arcs.length }}</strong>
+            </div>
+          </div>
+        }
+      }
+    </aside>
+  </main>
+  <footer class="app-footer" role="status">
+    <span>{{
+      mode() === 'Simulate' ? 'Simulation: click an enabled transition to fire.' : toolHint()
+    }}</span>
+    <span>{{ notice() }}</span>
+    <span
+      >Viewed: {{ viewedCounts().places }} places · {{ viewedCounts().transitions }} transitions.
+      Network: {{ modelCounts().places }} physical places ·
+      {{ modelCounts().transitions }} transitions · {{ modelCounts().components }} components ({{
+        modelCounts().active
+      }}
+      active)</span
+    >
+    <span>{{ dirty() ? 'Modified' : 'Saved' }} · {{ zoom() }}%</span>
+  </footer>
+</div>
+
+@if (pending(); as change) {
+  <div class="dialog-backdrop">
+    <section
+      class="file-dialog"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="file-dialog-title"
+    >
+      <h2 id="file-dialog-title">{{ change.action }}</h2>
+      @if (change.warnings.length) {
+        <p>The net can be opened, with these changes:</p>
+        <ul>
+          @for (warning of change.warnings; track warning) {
+            <li>{{ warning }}</li>
+          }
+        </ul>
+      }
+      <div class="dialog-actions">
+        <button class="button" (click)="cancelPending()" id="cancel-open">Cancel</button>
+        <button class="button primary" (click)="acceptPending()">Open in new tab</button>
+      </div>
+    </section>
+  </div>
+}
+
+@if (editingElement(); as element) {
+  <app-element-dialog
+    [element]="element"
+    [authored]="true"
+    [game]="!!activeDocument()?.network?.type?.game"
+    [actor]="
+      element.kind === 'transition' && actorLabel(element.id) === 'Environment'
+        ? 'environment'
+        : 'controller'
+    "
+    [constantNames]="constantNames()"
+    [weightText]="'weight' in element ? weightText(element) : ''"
+    (authoredSaved)="applyAuthoredElement($event)"
+    (share)="openSharedPlace($event)"
+    [description]="editorDescription()"
+    [canInhibit]="editorCanInhibit()"
+    [timing]="editorTiming()"
+    [transportOutputs]="transportOutputs()"
+    (timedSaved)="applyTimedElement($event)"
+    [error]="dialogError()"
+    (saved)="applyElement($event)"
+    (cancelled)="closeEditor()"
+  />
+}
+
+@if (context(); as menu) {
+  <app-context-menu
+    [x]="menu.x"
+    [y]="menu.y"
+    [actions]="contextActions()"
+    (chosen)="contextAction($event)"
+    (dismissed)="closeContext($event)"
+  />
+}
+
+@if (documentDialog(); as dialog) {
+  <app-document-dialog
+    [action]="dialog.action"
+    [initial]="dialog"
+    [error]="documentDialogError()"
+    (saved)="submitDocumentDialog($event)"
+    (cancelled)="cancelDocumentDialog()"
+  />
+}
+@if (closingDocument(); as id) {
+  <div class="dialog-backdrop">
+    <section
+      class="file-dialog"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="close-dialog-title"
+    >
+      <h2 id="close-dialog-title">Close model?</h2>
+      <p>This model has unsaved changes. Cancel to keep working, or explicitly discard them.</p>
+      @if (error()) {
+        <p role="alert">{{ error() }}</p>
+      }
+      <div class="dialog-actions">
+        <button id="cancel-close" class="button" (click)="cancelClose()">Cancel</button
+        ><button class="button" (click)="saveAndClose(id)">Save and close</button
+        ><button class="button" (click)="closeDocument(id, true)">Discard changes and close</button>
+      </div>
+    </section>
+  </div>
+}
+
+@if (annotationEditor(); as draft) {
+  <app-annotation-dialog
+    [text]="draft.text"
+    [error]="dialogError()"
+    (saved)="applyAnnotation($event)"
+    (cancelled)="closeAnnotation()"
+  />
+}
+
+@if (tokenDraft(); as draft) {
+  <app-token-selection-dialog
+    [inputs]="draft.inputs"
+    [transition]="transitionName({ componentId: draft.componentId, elementId: draft.transition })"
+    [error]="tokenSelectionError()"
+    (saved)="confirmTokenSelection($event, draft)"
+    (cancelled)="cancelTokenSelection()"
+  />
+}
+
+@if (constantDraft(); as draft) {
+  <app-constant-dialog
+    [declaration]="draft.declaration"
+    [error]="constantError()"
+    (saved)="saveConstant($event)"
+    (cancelled)="closeConstant()"
+  />
+}
+
+@if (sharedDialog(); as dialog) {
+  <app-shared-place-dialog
+    [source]="activeDocument()!.network"
+    [target]="dialog.target"
+    [error]="sharedError()"
+    (saved)="saveSharedPlace($event)"
+    (cancelled)="closeSharedDialog()"
+    (editPool)="openSharedPool($event)"
+  />
+}
+
+@if (galleryOpen()) {
+  <app-example-gallery
+    [error]="galleryError()"
+    [loading]="galleryLoading()"
+    (selected)="openExample($event)"
+    (cancelled)="closeExamples()"
+  />
+}
+
+@if (transitionDialog(); as dialog) {
+  <app-shared-transition-dialog
+    [source]="activeDocument()!.network"
+    [target]="dialog.target"
+    [error]="sharedError()"
+    (saved)="saveSharedTransition($event)"
+    (cancelled)="closeSharedTransition()"
+    (editPool)="openSharedTransition($event)"
+  />
+}

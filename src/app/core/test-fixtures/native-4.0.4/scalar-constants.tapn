@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<pnml xmlns="http://www.informatik.hu-berlin.de/top/pnml/ptNetb" name="Scalar constants">
+  <declaration><structure><declarations><namedsort id="dot" name="dot"><dot/></namedsort></declarations></structure></declaration>
+  <constant name="K" value="2"/>
+  <constant name="D" value="5"/>
+  <constant name="Zero" value="0"/>
+  <net active="true" id="Scalar" type="P/T net">
+    <place id="p" name="p" positionX="30" positionY="30" initialMarking="3" invariant="&lt;= D" displayName="false"/>
+    <place id="q" name="q" positionX="230" positionY="30" initialMarking="0" invariant="&lt; inf"/>
+    <place id="b" name="b" positionX="30" positionY="160" initialMarking="0" invariant="&lt; inf"/>
+    <transition id="t" name="t" positionX="130" positionY="30" angle="90" urgent="false"/>
+    <transition id="o" name="o" positionX="130" positionY="160" urgent="false"/>
+    <arc id="ti" source="p" target="t" type="transport" weight="K" inscription="[Zero,D]:1"><hlinscription><text>1'dot</text><structure><numberof><subterm><numberconstant value="1"><positive/></numberconstant></subterm><subterm><useroperator declaration="dot"/></subterm></numberof></structure></hlinscription></arc>
+    <arc id="to" source="t" target="q" type="transport" weight="K" inscription="[Zero,D]:1"><hlinscription><text>1'dot</text><structure><numberof><subterm><numberconstant value="1"><positive/></numberconstant></subterm><subterm><useroperator declaration="dot"/></subterm></numberof></structure></hlinscription></arc>
+    <arc id="in" source="p" target="o" type="timed" weight="K" inscription="[K,D]"/>
+    <arc id="out" source="o" target="q" type="normal" weight="K" inscription="1"/>
+    <arc id="inh" source="b" target="o" type="tapnInhibitor" weight="K" inscription="[0,inf)"/>
+  </net>
+  <feature isTimed="true" isColored="false" isGame="false" isStochastic="false"/>
+</pnml>

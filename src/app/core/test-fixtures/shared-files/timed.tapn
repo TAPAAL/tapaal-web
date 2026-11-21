@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<pnml xmlns="http://www.informatik.hu-berlin.de/top/pnml/ptNetb" name="Shared file">
+  <declaration><structure><declarations><namedsort id="dot" name="dot"><dot/></namedsort></declarations></structure></declaration>
+  <shared-place name="Pool" initialMarking="3" invariant="&lt;= D"/>
+  <shared-place name="Unused" initialMarking="1" invariant="&lt;= Zero"/>
+  <net id="Alpha" type="P/T net" active="true">
+    <labels positionX="5" positionY="6" width="100" height="40" border="false">Pool note</labels>
+    <place id="constructor" name="Pool" positionX="30" positionY="30" nameOffsetX="7" nameOffsetY="9" displayName="false" initialMarking="3" invariant="&lt;= D"/>
+    <place id="q" name="q" positionX="230" positionY="30" initialMarking="0" invariant="&lt; inf"/>
+    <transition id="t" name="t" positionX="130" positionY="30" angle="90" urgent="false"/>
+    <transition id="o" name="o" positionX="130" positionY="160" urgent="false"/>
+    <arc id="ti" source="constructor" target="t" type="transport" weight="K" inscription="[Zero,D]:1"><arcpath id="0" xCoord="30" yCoord="30" arcPointType="false"/><arcpath id="1" xCoord="70" yCoord="60" arcPointType="true"/><arcpath id="2" xCoord="130" yCoord="30" arcPointType="false"/><hlinscription><text>1'dot</text><structure><numberof><subterm><numberconstant value="1"><positive/></numberconstant></subterm><subterm><useroperator declaration="dot"/></subterm></numberof></structure></hlinscription></arc>
+    <arc id="to" source="t" target="q" type="transport" weight="K" inscription="[Zero,D]:1"><hlinscription><text>1'dot</text><structure><numberof><subterm><numberconstant value="1"><positive/></numberconstant></subterm><subterm><useroperator declaration="dot"/></subterm></numberof></structure></hlinscription></arc>
+    <arc id="inh" source="constructor" target="o" type="tapnInhibitor" weight="K" inscription="[0,inf)"/>
+  </net>
+  <net id="Beta" type="P/T net" active="false">
+    <place id="constructor" name="Pool" positionX="30" positionY="60" initialMarking="3" invariant="&lt;= D"/>
+  </net>
+  <feature isTimed="true" isColored="false" isGame="false" isStochastic="false"/>
+  <constant name="K" value="2"/>
+  <constant name="D" value="5"/>
+  <constant name="Zero" value="0"/>
+</pnml>

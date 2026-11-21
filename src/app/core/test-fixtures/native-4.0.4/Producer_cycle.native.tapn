@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<pnml xmlns="http://www.informatik.hu-berlin.de/top/pnml/ptNetb">
+  <declaration>
+    <structure>
+      <declarations>
+        <namedsort id="dot" name="dot">
+          <dot/>
+        </namedsort>
+      </declarations>
+    </structure>
+  </declaration>
+  <net active="true" id="Producer" type="P/T net">
+    <place displayName="true" id="Idle" initialMarking="1" invariant="&lt; inf" name="Idle" nameOffsetX="0" nameOffsetY="35" positionX="150" positionY="225">
+      <type>
+        <text>dot</text>
+        <structure>
+          <usersort declaration="dot"/>
+        </structure>
+      </type>
+    </place>
+    <place displayName="true" id="Processing" initialMarking="0" invariant="&lt; inf" name="Processing" nameOffsetX="0" nameOffsetY="35" positionX="480" positionY="225">
+      <type>
+        <text>dot</text>
+        <structure>
+          <usersort declaration="dot"/>
+        </structure>
+      </type>
+    </place>
+    <place displayName="true" id="Completed" initialMarking="0" invariant="&lt; inf" name="Completed" nameOffsetX="0" nameOffsetY="35" positionX="825" positionY="225">
+      <type>
+        <text>dot</text>
+        <structure>
+          <usersort declaration="dot"/>
+        </structure>
+      </type>
+    </place>
+    <transition angle="0" displayName="true" distribution="constant" firingMode="Random" id="Start" infiniteServer="false" name="Start" nameOffsetX="0" nameOffsetY="35" player="0" positionX="300" positionY="225" priority="0" urgent="false" value="1.0" weight="1.0"/>
+    <transition angle="0" displayName="true" distribution="constant" firingMode="Random" id="Finish" infiniteServer="false" name="Finish" nameOffsetX="0" nameOffsetY="35" player="0" positionX="660" positionY="225" priority="0" urgent="false" value="1.0" weight="1.0"/>
+    <transition angle="0" displayName="true" distribution="constant" firingMode="Random" id="Reset" infiniteServer="false" name="Reset" nameOffsetX="0" nameOffsetY="35" player="0" positionX="480" positionY="360" priority="0" urgent="false" value="1.0" weight="1.0"/>
+    <arc id="a1" inscription="[0,inf)" nameOffsetX="0" nameOffsetY="0" source="Idle" target="Start" type="timed" weight="1">
+      <hlinscription>
+        <text>1'dot</text>
+        <structure>
+          <numberof>
+            <subterm>
+              <numberconstant value="1">
+                <positive/>
+              </numberconstant>
+            </subterm>
+            <subterm>
+              <useroperator declaration="dot"/>
+            </subterm>
+          </numberof>
+        </structure>
+      </hlinscription>
+      <arcpath arcPointType="false" id="0" xCoord="160" yCoord="240"/>
+      <arcpath arcPointType="false" id="1" xCoord="315" yCoord="240"/>
+    </arc>
+    <arc id="a2" inscription="1" nameOffsetX="0" nameOffsetY="0" source="Start" target="Processing" type="normal" weight="1">
+      <hlinscription>
+        <text>1'dot</text>
+        <structure>
+          <numberof>
+            <subterm>
+              <numberconstant value="1">
+                <positive/>
+              </numberconstant>
+            </subterm>
+            <subterm>
+              <useroperator declaration="dot"/>
+            </subterm>
+          </numberof>
+        </structure>
+      </hlinscription>
+      <arcpath arcPointType="false" id="0" xCoord="320" yCoord="240"/>
+      <arcpath arcPointType="false" id="1" xCoord="495" yCoord="240"/>
+    </arc>
+    <arc id="a3" inscription="[0,inf)" nameOffsetX="0" nameOffsetY="0" source="Processing" target="Finish" type="timed" weight="1">
+      <hlinscription>
+        <text>1'dot</text>
+        <structure>
+          <numberof>
+            <subterm>
+              <numberconstant value="1">
+                <positive/>
+              </numberconstant>
+            </subterm>
+            <subterm>
+              <useroperator declaration="dot"/>
+            </subterm>
+          </numberof>
+        </structure>
+      </hlinscription>
+      <arcpath arcPointType="false" id="0" xCoord="500" yCoord="240"/>
+      <arcpath arcPointType="false" id="1" xCoord="675" yCoord="240"/>
+    </arc>
+    <arc id="a4" inscription="1" nameOffsetX="0" nameOffsetY="0" source="Finish" target="Completed" type="normal" weight="1">
+      <hlinscription>
+        <text>1'dot</text>
+        <structure>
+          <numberof>
+            <subterm>
+              <numberconstant value="1">
+                <positive/>
+              </numberconstant>
+            </subterm>
+            <subterm>
+              <useroperator declaration="dot"/>
+            </subterm>
+          </numberof>
+        </structure>
+      </hlinscription>
+      <arcpath arcPointType="false" id="0" xCoord="680" yCoord="240"/>
+      <arcpath arcPointType="false" id="1" xCoord="840" yCoord="240"/>
+    </arc>
+    <arc id="a5" inscription="[0,inf)" nameOffsetX="0" nameOffsetY="0" source="Completed" target="Reset" type="timed" weight="1">
+      <hlinscription>
+        <text>1'dot</text>
+        <structure>
+          <numberof>
+            <subterm>
+              <numberconstant value="1">
+                <positive/>
+              </numberconstant>
+            </subterm>
+            <subterm>
+              <useroperator declaration="dot"/>
+            </subterm>
+          </numberof>
+        </structure>
+      </hlinscription>
+      <arcpath arcPointType="false" id="0" xCoord="840" yCoord="240"/>
+      <arcpath arcPointType="false" id="1" xCoord="495" yCoord="375"/>
+    </arc>
+    <arc id="a6" inscription="1" nameOffsetX="0" nameOffsetY="0" source="Reset" target="Idle" type="normal" weight="1">
+      <hlinscription>
+        <text>1'dot</text>
+        <structure>
+          <numberof>
+            <subterm>
+              <numberconstant value="1">
+                <positive/>
+              </numberconstant>
+            </subterm>
+            <subterm>
+              <useroperator declaration="dot"/>
+            </subterm>
+          </numberof>
+        </structure>
+      </hlinscription>
+      <arcpath arcPointType="false" id="0" xCoord="500" yCoord="380"/>
+      <arcpath arcPointType="false" id="1" xCoord="165" yCoord="240"/>
+    </arc>
+  </net>
+  <feature isColored="false" isGame="false" isStochastic="false" isTimed="false"/>
+</pnml>

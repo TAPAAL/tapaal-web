@@ -1,0 +1,14 @@
+TAPAAL native example nets
+
+These .tapn files are byte-identical copies of src/main/resources/Example nets/
+in this repository. The original native files are authoritative. No queries,
+constants, type flags or annotations have been stripped or rewritten.
+LICENSE.txt is copied unchanged from tools/distribution-info/LICENSE.txt; this
+retains the repository distribution licensing notice without claiming a new
+license for individual examples.
+
+From web/: npm run examples:update regenerates the catalog and copies resources.
+npm run examples:check checks all copies, hashes, statistics and parser outcomes.
+The catalog in src/app/example-catalog.json records SHA-256 provenance and the
+actual parseSharedModel result for every source resource. Unsupported examples
+remain downloadable for use in native TAPAAL.

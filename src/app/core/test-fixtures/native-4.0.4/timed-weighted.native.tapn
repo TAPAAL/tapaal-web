@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<pnml xmlns="http://www.informatik.hu-berlin.de/top/pnml/ptNetb">
+  <declaration>
+    <structure>
+      <declarations>
+        <namedsort id="dot" name="dot">
+          <dot/>
+        </namedsort>
+      </declarations>
+    </structure>
+  </declaration>
+  <net active="true" id="Clock" type="P/T net">
+    <labels border="false" height="41" positionX="11" positionY="301" width="121">Deadline</labels>
+    <place displayName="false" id="Start" initialMarking="3" invariant="&lt;= 5" name="Start" nameOffsetX="-5" nameOffsetY="35" positionX="90" positionY="60">
+      <type>
+        <text>dot</text>
+        <structure>
+          <usersort declaration="dot"/>
+        </structure>
+      </type>
+      <hlinitialMarking>
+        <text>3'dot</text>
+        <structure>
+          <add>
+            <subterm>
+              <numberof>
+                <subterm>
+                  <numberconstant value="3">
+                    <positive/>
+                  </numberconstant>
+                </subterm>
+                <subterm>
+                  <dotconstant/>
+                </subterm>
+              </numberof>
+            </subterm>
+          </add>
+        </structure>
+      </hlinitialMarking>
+    </place>
+    <place displayName="true" id="Moved" initialMarking="0" invariant="&lt; inf" name="Moved" nameOffsetX="0" nameOffsetY="0" positionX="300" positionY="60">
+      <type>
+        <text>dot</text>
+        <structure>
+          <usersort declaration="dot"/>
+        </structure>
+      </type>
+    </place>
+    <place displayName="true" id="Block" initialMarking="0" invariant="&lt; 7" name="Block" nameOffsetX="0" nameOffsetY="0" positionX="300" positionY="200">
+      <type>
+        <text>dot</text>
+        <structure>
+          <usersort declaration="dot"/>
+        </structure>
+      </type>
+    </place>
+    <transition angle="90" displayName="true" distribution="constant" firingMode="Random" id="Go" infiniteServer="false" name="Go" nameOffsetX="12" nameOffsetY="-4" player="0" positionX="195" positionY="60" priority="0" urgent="false" value="1.0" weight="1.0"/>
+    <transition angle="0" displayName="true" distribution="constant" firingMode="Random" id="Now" infiniteServer="false" name="Now" nameOffsetX="0" nameOffsetY="0" player="0" positionX="195" positionY="200" priority="0" urgent="true" value="1.0" weight="1.0"/>
+    <arc id="A0" inscription="(1,5):1" nameOffsetX="0" nameOffsetY="0" source="Start" target="Go" transportID="1" type="transport" weight="2">
+      <hlinscription>
+        <text>2'dot</text>
+        <structure>
+          <numberof>
+            <subterm>
+              <numberconstant value="2">
+                <positive/>
+              </numberconstant>
+            </subterm>
+            <subterm>
+              <useroperator declaration="dot"/>
+            </subterm>
+          </numberof>
+        </structure>
+      </hlinscription>
+      <arcpath arcPointType="false" id="0" xCoord="105" yCoord="75"/>
+      <arcpath arcPointType="true" id="1" xCoord="150" yCoord="20"/>
+      <arcpath arcPointType="false" id="2" xCoord="210" yCoord="75"/>
+    </arc>
+    <arc id="A1" inscription="(1,5):1" nameOffsetX="0" nameOffsetY="0" source="Go" target="Moved" transportID="1" type="transport" weight="2">
+      <hlinscription>
+        <text>2'dot</text>
+        <structure>
+          <numberof>
+            <subterm>
+              <numberconstant value="2">
+                <positive/>
+              </numberconstant>
+            </subterm>
+            <subterm>
+              <useroperator declaration="dot"/>
+            </subterm>
+          </numberof>
+        </structure>
+      </hlinscription>
+      <arcpath arcPointType="false" id="0" xCoord="210" yCoord="75"/>
+      <arcpath arcPointType="false" id="1" xCoord="255" yCoord="135"/>
+      <arcpath arcPointType="true" id="2" xCoord="315" yCoord="75"/>
+    </arc>
+    <arc id="A2" inscription="[2,inf)" nameOffsetX="0" nameOffsetY="0" source="Moved" target="Go" type="timed" weight="3">
+      <hlinscription>
+        <text>3'dot</text>
+        <structure>
+          <numberof>
+            <subterm>
+              <numberconstant value="3">
+                <positive/>
+              </numberconstant>
+            </subterm>
+            <subterm>
+              <useroperator declaration="dot"/>
+            </subterm>
+          </numberof>
+        </structure>
+      </hlinscription>
+      <arcpath arcPointType="false" id="0" xCoord="315" yCoord="75"/>
+      <arcpath arcPointType="false" id="1" xCoord="210" yCoord="75"/>
+    </arc>
+    <arc id="I3" inscription="[0,inf)" nameOffsetX="0" nameOffsetY="0" source="Block" target="Now" type="tapnInhibitor" weight="4">
+      <arcpath arcPointType="false" id="0" xCoord="315" yCoord="215"/>
+      <arcpath arcPointType="false" id="1" xCoord="210" yCoord="210"/>
+    </arc>
+    <arc id="A4" inscription="1" nameOffsetX="0" nameOffsetY="0" source="Now" target="Block" type="normal" weight="5">
+      <hlinscription>
+        <text>5'dot</text>
+        <structure>
+          <numberof>
+            <subterm>
+              <numberconstant value="5">
+                <positive/>
+              </numberconstant>
+            </subterm>
+            <subterm>
+              <useroperator declaration="dot"/>
+            </subterm>
+          </numberof>
+        </structure>
+      </hlinscription>
+      <arcpath arcPointType="false" id="0" xCoord="210" yCoord="215"/>
+      <arcpath arcPointType="false" id="1" xCoord="315" yCoord="210"/>
+    </arc>
+  </net>
+  <query active="true" algorithmOption="CERTAIN_ZERO" approximationDenominator="2" capacity="3" colorFixpoint="false" coloredReduction="false" discreteInclusion="false" enableOverApproximation="false" enableUnderApproximation="false" extrapolationOption="AUTOMATIC" gcd="true" hashTableSize="MB_16" inclusionPlaces="*NONE*" name="Moved Reachable" overApproximation="true" pTrie="true" partitioning="false" reduction="true" reductionOption="VerifyDTAPN" searchOption="BFS" symmetricVars="false" symmetry="true" timeDarts="false" traceOption="SOME" type="Default" useExplicitSearch="false" useQueryReduction="true" useSiphonTrapAnalysis="false" useStubbornReduction="true" useTarOption="false" useTarjan="false">
+    <formula>
+      <exists-path>
+        <finally>
+          <integer-ge>
+            <tokens-count>
+              <place>Clock.Moved</place>
+            </tokens-count>
+            <integer-constant>2</integer-constant>
+          </integer-ge>
+        </finally>
+      </exists-path>
+    </formula>
+  </query>
+  <feature isColored="false" isGame="false" isStochastic="false" isTimed="true"/>
+</pnml>
