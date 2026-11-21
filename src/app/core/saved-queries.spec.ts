@@ -5,10 +5,7 @@ import * as d from './documents';
 import * as f from './network-files';
 import { captureSavedQueries, parseSavedQuery } from './saved-queries';
 const fixture = (name = 'two-phase-locking') =>
-  f.parseNetworkTapn(
-    readFileSync(`../src/main/resources/Example nets/${name}.tapn`, 'utf8'),
-    `${name}.tapn`,
-  ).network;
+  f.parseNetworkTapn(readFileSync(`public/examples/${name}.tapn`, 'utf8'), `${name}.tapn`).network;
 
 describe('opaque saved queries', () => {
   for (const name of ['two-phase-locking', 'home-construction'])

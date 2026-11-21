@@ -25,7 +25,7 @@ const scalar = readFileSync(
   'src/app/core/test-fixtures/native-4.0.4/scalar-constants.tapn',
   'utf8',
 );
-const real = readFileSync('../src/main/resources/Example nets/webserver.tapn', 'utf8');
+const real = readFileSync('public/examples/webserver.tapn', 'utf8');
 function open(text = scalar) {
   return workspace.openNetworkDocument(parseAuthoredTapn(text).network, {
     saved: true,

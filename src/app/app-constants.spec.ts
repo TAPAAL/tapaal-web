@@ -10,7 +10,7 @@ const scalar = readFileSync(
   'src/app/core/test-fixtures/native-4.0.4/scalar-constants.tapn',
   'utf8',
 );
-const webserver = readFileSync('../src/main/resources/Example nets/webserver.tapn', 'utf8');
+const webserver = readFileSync('public/examples/webserver.tapn', 'utf8');
 function inputFile(text: string | Promise<string>): Event {
   return {
     target: {

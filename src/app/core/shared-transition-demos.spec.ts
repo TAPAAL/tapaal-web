@@ -12,7 +12,7 @@ import { SharedNetworkSimulation } from './shared-network-simulation';
 it.each(['train-level-crossing', 'workflow-advanced', 'workflow-complaint', 'workflow-medical'])(
   'unchanged native %s preserves source on saves and executes synchronization',
   (name) => {
-    const input = readFileSync(`../src/main/resources/Example nets/${name}.tapn`, 'utf8');
+    const input = readFileSync(`public/examples/${name}.tapn`, 'utf8');
     const source = parseSharedTapn(input).network;
     expect(source.shared.transitions.length).toBeGreaterThan(0);
     expect(parseSharedJson(serializeSharedJson(source)).network).toEqual(source);

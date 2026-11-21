@@ -20,13 +20,13 @@ const { chromium } = require(process.env.PLAYWRIGHT_CORE ?? 'playwright-core');
 const BASE = process.argv[2] ?? 'http://127.0.0.1:4411';
 const OUT = resolve(process.argv[3] ?? '/tmp/tapaal-constants-ui-validation/run');
 const ONLY = process.env.ONLY?.split(',');
-const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
+const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 mkdirSync(OUT, { recursive: true });
 
 // ---- fixtures ---------------------------------------------------------------------------------
 // Unchanged repository example and the unchanged native 4.0.4 scalar fixture.
-const WEBSERVER = join(ROOT, 'src/main/resources/Example nets/webserver.tapn');
-const SCALAR = join(ROOT, 'web/src/app/core/test-fixtures/native-4.0.4/scalar-constants.tapn');
+const WEBSERVER = join(ROOT, 'public/examples/webserver.tapn');
+const SCALAR = join(ROOT, 'src/app/core/test-fixtures/native-4.0.4/scalar-constants.tapn');
 const write = (name, text) => {
   const path = join(OUT, name);
   writeFileSync(path, text);

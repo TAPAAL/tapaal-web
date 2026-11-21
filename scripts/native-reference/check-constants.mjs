@@ -178,7 +178,7 @@ for (const [name, from, to] of variants) {
   results.push({ name, native: observation, web: { accepted: w.accepted, error: w.error } });
 }
 const candidate = readFileSync(
-  join(WEB, '../src/main/resources/Example nets/webserver.tapn'),
+  join(WEB, 'public/examples/webserver.tapn'),
   'utf8',
 );
 const candidateWeb = web(candidate);

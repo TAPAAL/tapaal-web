@@ -1,12 +1,18 @@
 // @vitest-environment jsdom
 import '@angular/compiler';
-import { ElementRef, signal } from '@angular/core';
+import { readFileSync } from 'node:fs';
+import { ElementRef, signal, ɵresolveComponentResources } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { BrowserTestingModule, platformBrowserTesting } from '@angular/platform-browser/testing';
 import { afterEach, beforeAll, expect, it } from 'vitest';
 import { ExampleGallery, EXAMPLES } from './example-gallery';
 
-beforeAll(() => TestBed.initTestEnvironment(BrowserTestingModule, platformBrowserTesting()));
+beforeAll(async () => {
+  await ɵresolveComponentResources(async (file) =>
+    readFileSync(new URL(file, import.meta.url), 'utf8'),
+  );
+  TestBed.initTestEnvironment(BrowserTestingModule, platformBrowserTesting());
+});
 afterEach(() => TestBed.resetTestingModule());
 
 it('keeps focus on search while Open becomes disabled, including a failed fetch', () => {
@@ -55,7 +61,7 @@ it('labels raw XML node statistics as occurrences', () => {
   });
   fixture.componentInstance.search = 'alternating-bit-protocol-components';
   fixture.detectChanges();
-  const text = fixture.nativeElement.querySelector('article').textContent;
+  const text = fixture.nativeElement.querySelector('article button').title;
   const entry = EXAMPLES.find((e) => e.label === 'alternating-bit-protocol-components')!;
   expect(text).toContain(`${entry.stats.places} place occurrences`);
   expect(text).toContain(`${entry.stats.transitions} transition occurrences`);
@@ -68,7 +74,7 @@ it('finds and identifies examples with synchronized transitions', () => {
   });
   fixture.componentInstance.search = 'shared transitions';
   fixture.detectChanges();
-  expect(fixture.nativeElement.textContent).toContain('train-level-crossing');
+  expect(fixture.nativeElement.textContent).toContain('Train level crossing');
   expect(fixture.nativeElement.querySelector('article').textContent).toContain(
     'Shared transitions',
   );

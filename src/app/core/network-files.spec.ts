@@ -333,8 +333,7 @@ describe('native multi-component TAPN import', () => {
     for (const [source, message] of cases) expect(() => parseNetworkTapn(source)).toThrow(message);
   });
   it('rejects real desktop examples whose content would be lost', () => {
-    const example = (name: string) =>
-      readFileSync(`../src/main/resources/Example nets/${name}.tapn`, 'utf8');
+    const example = (name: string) => readFileSync(`public/examples/${name}.tapn`, 'utf8');
     expect(parseNetworkTapn(example('two-phase-locking')).network.savedQueries?.xml).toHaveLength(
       4,
     );
@@ -454,8 +453,7 @@ describe('native element layout in TAPN', () => {
     expect(() => serializeNetworkJson(carriage)).toThrow(/carriage returns/);
   });
   it('opens real untimed desktop examples with rotation and annotations', () => {
-    const example = (name: string) =>
-      readFileSync(`../src/main/resources/Example nets/${name}.tapn`, 'utf8');
+    const example = (name: string) => readFileSync(`public/examples/${name}.tapn`, 'utf8');
     const erk = parseNetworkTapn(example('ERK'), 'ERK.tapn').network;
     expect(erk.components[0].net.nodes.filter((n) => n.angle)).toHaveLength(8);
     expect(erk.savedQueries?.xml).toHaveLength(1);

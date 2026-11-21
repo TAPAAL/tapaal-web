@@ -161,7 +161,7 @@ describe('model file round trips', () => {
   ] as const)(
     'imports the real %s desktop example and reports omitted queries',
     (name, template, places, transitions, arcs, queries) => {
-      const source = readFileSync(`../src/main/resources/Example nets/${name}.tapn`, 'utf8');
+      const source = readFileSync(`public/examples/${name}.tapn`, 'utf8');
       const imported = parseTapn(source, `${name}.tapn`);
       expect(imported.net.template).toBe(template);
       expect(imported.net.nodes.filter((n) => n.kind === 'place')).toHaveLength(places);
@@ -279,7 +279,7 @@ describe('native arc paths', () => {
   it.each(['ERK', 'home-construction'])(
     'preserves every interior point and end type of the desktop %s example',
     (name) => {
-      const source = readFileSync(`../src/main/resources/Example nets/${name}.tapn`, 'utf8');
+      const source = readFileSync(`public/examples/${name}.tapn`, 'utf8');
       const original = new DOMParser().parseFromString(source, 'application/xml');
       const expected = Array.from(original.querySelectorAll('arc')).map((arc) => {
         const points = Array.from(arc.querySelectorAll('arcpath')).map((point) => ({
@@ -429,7 +429,7 @@ describe('rejecting unsupported and malformed files', () => {
 
 describe('desktop compatibility boundaries', () => {
   it('repairs real ERK arc ID collisions without changing endpoints or weights', () => {
-    const source = readFileSync('../src/main/resources/Example nets/ERK.tapn', 'utf8');
+    const source = readFileSync('public/examples/ERK.tapn', 'utf8');
     const original = new DOMParser().parseFromString(source, 'application/xml');
     const expected = Array.from(original.querySelectorAll('arc')).map((arc) => ({
       source: arc.getAttribute('source'),

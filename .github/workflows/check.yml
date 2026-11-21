@@ -1,0 +1,17 @@
+name: Web prototype checks
+
+on: [push, pull_request]
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: nubjs/setup-nub@v0
+      - run: nub ci
+      - run: nub run format:check
+      - run: nub run test
+      - run: nub run build

@@ -181,7 +181,7 @@ try {
   st = await state();
   check(st.marking.p === 2 && st.marking.q === 0, 'inactive member frozen');
   await mode('Edit');
-  await open(join(process.cwd(), 'web/public/examples/train-level-crossing.tapn'));
+  await open(join(process.cwd(), 'public/examples/train-level-crossing.tapn'));
   check((await state()).source.shared.transitions.length > 0, 'unchanged native train demo opens');
   await page.screenshot({ path: join(out, 'train-shared-demo.png') });
   const protectedSource = JSON.stringify((await state()).source);

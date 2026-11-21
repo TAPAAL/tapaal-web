@@ -56,8 +56,7 @@ const TIMED = `<?xml version="1.0" encoding="UTF-8" standalone="no"?>
   <feature isGame="false" isTimed="true" isColored="false" isStochastic="false"/>
 </pnml>
 `;
-const example = (name: string) =>
-  readFileSync(`../src/main/resources/Example nets/${name}.tapn`, 'utf8');
+const example = (name: string) => readFileSync(`public/examples/${name}.tapn`, 'utf8');
 const replace = (from: string, to: string) => {
   expect(TIMED).toContain(from);
   return TIMED.replace(from, to);

@@ -1,14 +1,11 @@
-TAPAAL native example nets
+TAPAAL desktop example nets
 
-These .tapn files are byte-identical copies of src/main/resources/Example nets/
-in this repository. The original native files are authoritative. No queries,
-constants, type flags or annotations have been stripped or rewritten.
-LICENSE.txt is copied unchanged from tools/distribution-info/LICENSE.txt; this
-retains the repository distribution licensing notice without claiming a new
-license for individual examples.
+The 29 .tapn files were copied byte-for-byte from src/main/resources/Example nets/
+in the TAPAAL GUI development checkout at b28c211cdc8a874b6efdc5f03d2940b61860a1a1.
+LICENSE.txt is the accompanying tools/distribution-info/LICENSE.txt. It preserves
+the upstream distribution notice. SHA-256 hashes are in src/app/example-catalog.json.
 
-From web/: npm run examples:update regenerates the catalog and copies resources.
-npm run examples:check checks all copies, hashes, statistics and parser outcomes.
-The catalog in src/app/example-catalog.json records SHA-256 provenance and the
-actual parseSharedModel result for every source resource. Unsupported examples
-remain downloadable for use in native TAPAAL.
+From the repository root, npm run examples:check compares bundled file membership,
+hashes, metadata and parser outcomes against the tracked catalog. When updating an
+upstream resource, copy the original bytes and applicable notices, record the
+upstream revision here, then run npm run examples:update and review the diff.

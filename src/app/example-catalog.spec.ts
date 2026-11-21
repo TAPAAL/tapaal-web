@@ -1,17 +1,11 @@
 // @vitest-environment jsdom
-import { readFileSync, readdirSync, mkdirSync, writeFileSync } from 'node:fs';
+import { readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { expect, it } from 'vitest';
 import { parseSharedModel } from './core/shared-files';
 
 it('catalog includes every unchanged native resource and records the real parser outcome', () => {
-  const source = '../src/main/resources/Example nets/';
-  const license = readFileSync('../tools/distribution-info/LICENSE.txt');
-  if (process.env['UPDATE_EXAMPLES']) {
-    mkdirSync('public/examples', { recursive: true });
-    writeFileSync('public/examples/LICENSE.txt', license);
-  }
-  expect(readFileSync('public/examples/LICENSE.txt').equals(license)).toBe(true);
+  const source = 'public/examples/';
   const families = [
     'P/T nets',
     'Timed-Arc Petri nets',
@@ -84,11 +78,6 @@ it('catalog includes every unchanged native resource and records the real parser
         warnings,
         sha256: createHash('sha256').update(bytes).digest('hex'),
       };
-      if (process.env['UPDATE_EXAMPLES']) {
-        mkdirSync('public/examples', { recursive: true });
-        writeFileSync('public/' + entry.url, bytes);
-      }
-      expect(readFileSync('public/' + entry.url).equals(bytes)).toBe(true);
       return entry;
     })
     .sort(
